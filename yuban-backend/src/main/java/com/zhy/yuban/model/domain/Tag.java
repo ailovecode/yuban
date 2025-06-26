@@ -1,3 +1,4 @@
+
 package com.zhy.yuban.model.domain;
 
 import com.baomidou.mybatisplus.annotation.*;
@@ -8,6 +9,7 @@ import java.util.Date;
 /**
  * 标签表
  * @TableName tag
+ * @author zhy
  */
 @TableName(value ="tag")
 @Data
@@ -49,7 +51,7 @@ public class Tag {
     private Date createTime;
 
     /**
-     * 
+     *
      */
     @TableField(value = "updateTime")
     private Date updateTime;
