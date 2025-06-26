@@ -1,4 +1,4 @@
-package com.zhy.yuban.model.domain.request;
+package com.zhy.yuban.model.request;
 
 import lombok.Data;
 

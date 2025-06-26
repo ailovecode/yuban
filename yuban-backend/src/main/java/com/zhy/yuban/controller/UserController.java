@@ -1,7 +1,6 @@
 package com.zhy.yuban.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.zhy.yuban.common.BaseResponse;
 import com.zhy.yuban.common.ErrorCode;
@@ -9,28 +8,22 @@ import com.zhy.yuban.common.ResultUtil;
 import com.zhy.yuban.exception.BusinessException;
 import com.zhy.yuban.mapper.UserMapper;
 import com.zhy.yuban.model.domain.User;
-import com.zhy.yuban.model.domain.request.UserLoginRequest;
-import com.zhy.yuban.model.domain.request.UserRegisterRequest;
+import com.zhy.yuban.model.request.UserLoginRequest;
+import com.zhy.yuban.model.request.UserRegisterRequest;
 import com.zhy.yuban.service.UserService;
 import io.swagger.annotations.Api;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.jws.soap.SOAPBinding;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.zhy.yuban.constant.UserConstant.ADMIN_ROLE;
 import static com.zhy.yuban.constant.UserConstant.USER_LOGIN_STATUS;
 
 /**
@@ -47,7 +40,7 @@ public class UserController {
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
     @Resource
     private UserService userService;
-    @Autowired
+    @Resource
     private UserMapper userMapper;
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
