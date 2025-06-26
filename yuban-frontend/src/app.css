@@ -1,0 +1,5 @@
+.user-info-container {
+    height: 100%; /* 减去导航栏和底部tabbar的高度 */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* 平滑滚动 */
+}

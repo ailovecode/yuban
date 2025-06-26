@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: yuban-backend
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/zhyuercenter
+    username: root
+    password: zhanghy0330
+  # 设置session存储的时间
+  session:
+    timeout: 86400
+    store-type: redis
+
+  # 设置redis 配置信息
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+server:
+  port: 8080
+
+  servlet:
+    context-path: /zhy
+    session:
+      cookie:
+        domain: localhost
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: isDelete   # 全局逻辑删除字段名
+      logic-delete-value: 1 # 逻辑已删除值
+      logic-not-delete-value: 0 # 逻辑未删除值
+springfox:
+  documentation:
+    enabled: true
+knife4j:
+  enable: true
+#  production: true # 仅在处于生产环境时开启
+  openapi:
+    title: 宇伴匹配系统
+    description: "宇伴项目在线API文档"
+    email: xiaoyu208h@qq.com
+    concat: xiaoyu
+    version: v4.0
+    license: Apache 2.0
+    license-url: https://stackoverflow.com/
+    terms-of-service-url: https://stackoverflow.com/
+    group:
+      test1:
+        group-name: userPort
+        api-rule: package
+        api-rule-resources:
+          - com.zhy.yuban.controller
