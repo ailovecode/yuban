@@ -80,14 +80,16 @@ public class TeamController {
     }
 
     @PostMapping("/delete")
-    public BaseResponse<Boolean> deleteTeam(@RequestParam("teamId") long teamId) {
-        // 校验队伍信息
-        if(teamId < 0) {
+    public BaseResponse<Boolean> deleteTeam(@RequestBody TeamQuitRequest deleteTeamRequest, HttpServletRequest request) {
+        // 1. 校验队伍信息
+        if(deleteTeamRequest == null) {
             throw new BusinessException(ErrorCode.NULL_ERROR, "请求队伍 id 为空！");
         }
-        boolean  result = teamService.removeById(teamId);
+        // 2. 获取登录用户信息
+        User loginUser = userService.getLoginUser(request);
+        boolean result = teamService.deleteTeam(deleteTeamRequest, loginUser);
         if(!result) {
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "队伍删除失败！");
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "队伍解散失败！");
         }
         return ResultUtil.success(true);
     }
@@ -133,6 +135,33 @@ public class TeamController {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "获取队伍信息失败！");
         }
         return ResultUtil.success(team);
+    }
+
+    @GetMapping("/get/team")
+    public BaseResponse<List<TeamUserVo>> getTeamByUserId(HttpServletRequest request) {
+        // 1. 获取登录信息
+        User loginUser = userService.getLoginUser(request);
+        // 2. 调用业务实现
+        List<TeamUserVo> result = teamService.getTeamByUserId(loginUser);
+        if(result == null) {
+            throw new BusinessException(ErrorCode.NULL_ERROR, "用户或许还未加入队伍");
+        }
+        return ResultUtil.success(result);
+    }
+
+    @GetMapping("/get/manageTeam")
+    public BaseResponse<List<TeamUserVo>> getManageTeamByUserId(HttpServletRequest request) {
+        // 1. 获取登录用户信息
+        User loginUser = userService.getLoginUser(request);
+        // 2. 构造 TeamQuery 实体类
+        TeamQuery teamQuery = new TeamQuery();
+        teamQuery.setCaptainId(loginUser.getId());
+        // 3. 调用 teamList 服务
+        List<TeamUserVo> teamList = teamService.teamList(teamQuery, loginUser);
+        if(teamList == null) {
+            throw new BusinessException(ErrorCode.NULL_ERROR, "该用户没有管理的队伍！");
+        }
+        return ResultUtil.success(teamList);
     }
 
     @GetMapping("/list")

@@ -20,11 +20,6 @@ public class TeamAddRequest implements Serializable {
     private String teamName;
 
     /**
-     * 队长id
-     */
-    private Long captainId;
-
-    /**
      * 队伍描述
      */
     private String description;

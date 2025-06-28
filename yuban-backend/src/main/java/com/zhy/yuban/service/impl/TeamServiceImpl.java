@@ -25,10 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
 * @author DELL
@@ -342,6 +339,58 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
             }
         }
         return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean deleteTeam(TeamQuitRequest deleteTeamRequest, User loginUser) {
+        Long teamId = deleteTeamRequest.getTeamId();
+        // 1. 获取队伍信息
+        Team team = this.getById(teamId);
+        if(team == null) {
+            throw new BusinessException(ErrorCode.NULL_ERROR, "该队伍不存在！");
+        }
+        // 2. 校验权限是否为队长
+        if(!Objects.equals(loginUser.getId(), team.getCaptainId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH, "用户没有权限解散队伍！");
+        }
+        // 3. 删除队伍关联队员信息
+        QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();
+        userTeamQueryWrapper.eq("teamId", teamId);
+        boolean delete = userTeamService.remove(userTeamQueryWrapper);
+        if (!delete) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "解散队伍失败！");
+        }
+        // 4. 删除队伍
+        boolean removeTeam = this.removeById(teamId);
+        if(!removeTeam) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "解散队伍失败！");
+        }
+        return true;
+    }
+
+    @Override
+    public List<TeamUserVo> getTeamByUserId(User loginUser) {
+        // 1. 通过关联表获取用户加入队伍id列表
+        QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();
+        userTeamQueryWrapper.eq("userId", loginUser.getId());
+        List<UserTeam> listUserTeam = userTeamService.list(userTeamQueryWrapper);
+        if(listUserTeam.isEmpty()) {
+            throw new BusinessException(ErrorCode.NULL_ERROR, "未找到用户加入的队伍！");
+        }
+        // 2. 通过遍历列表信息调用 teamList 返回包装类 UserTeamVo
+        List<TeamUserVo> result = new ArrayList<>();
+        for(UserTeam userTeam : listUserTeam) {
+            long teamId = userTeam.getTeamId();
+            TeamQuery teamQuery = new TeamQuery();
+            teamQuery.setTeamId(teamId);
+            List<TeamUserVo> teamUserVo = this.teamList(teamQuery, loginUser);
+            if(teamUserVo.isEmpty()) {
+                throw new BusinessException(ErrorCode.NULL_ERROR, "获取队伍信息错误！");
+            }
+            result.add(teamUserVo.get(0));
+        }
+        return result;
     }
 }
 
