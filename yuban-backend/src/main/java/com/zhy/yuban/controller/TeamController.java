@@ -11,6 +11,7 @@ import com.zhy.yuban.model.domain.User;
 import com.zhy.yuban.model.dto.TeamQuery;
 import com.zhy.yuban.model.request.TeamAddRequest;
 import com.zhy.yuban.model.request.TeamJoinRequest;
+import com.zhy.yuban.model.request.TeamQuitRequest;
 import com.zhy.yuban.model.request.TeamUpdateRequest;
 import com.zhy.yuban.model.vo.TeamUserVo;
 import com.zhy.yuban.service.TeamService;
@@ -72,7 +73,7 @@ public class TeamController {
         // 2. 获取登录信息
         User loginUser = userService.getLoginUser(request);
         Boolean result = teamService.joinTeam(teamJoinRequest, loginUser);
-        if(!result) {
+        if(Boolean.FALSE.equals(result)) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "加入队伍失败！");
         }
         return ResultUtil.success(true);
@@ -80,7 +81,6 @@ public class TeamController {
 
     @PostMapping("/delete")
     public BaseResponse<Boolean> deleteTeam(@RequestParam("teamId") long teamId) {
-
         // 校验队伍信息
         if(teamId < 0) {
             throw new BusinessException(ErrorCode.NULL_ERROR, "请求队伍 id 为空！");
@@ -88,6 +88,21 @@ public class TeamController {
         boolean  result = teamService.removeById(teamId);
         if(!result) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "队伍删除失败！");
+        }
+        return ResultUtil.success(true);
+    }
+
+    @PostMapping("/quit")
+    public BaseResponse<Boolean> quitTeam(@RequestBody TeamQuitRequest teamQuitRequest, HttpServletRequest request) {
+        // 1. 校验请求参数信息是否为空
+        if(teamQuitRequest == null) {
+            throw new BusinessException(ErrorCode.NULL_ERROR);
+        }
+        // 2. 获取登录信息
+        User loginUser = userService.getLoginUser(request);
+        Boolean result = teamService.quitTeam(teamQuitRequest, loginUser);
+        if(Boolean.FALSE.equals(result)) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "退出队伍失败！");
         }
         return ResultUtil.success(true);
     }

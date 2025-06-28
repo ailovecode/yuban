@@ -2,11 +2,12 @@ package com.zhy.yuban.model.domain;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
-import lombok.Data;
 
 /**
  * 用户-队伍表
@@ -51,5 +52,6 @@ public class UserTeam implements Serializable {
     /**
      * 是否删除（逻辑删除 0 1）
      */
+    @TableLogic
     private Integer isDelete;
 }

@@ -13,6 +13,7 @@ import com.zhy.yuban.model.domain.UserTeam;
 import com.zhy.yuban.model.dto.TeamQuery;
 import com.zhy.yuban.model.request.TeamAddRequest;
 import com.zhy.yuban.model.request.TeamJoinRequest;
+import com.zhy.yuban.model.request.TeamQuitRequest;
 import com.zhy.yuban.model.request.TeamUpdateRequest;
 import com.zhy.yuban.model.vo.TeamUserVo;
 import com.zhy.yuban.model.vo.UserVo;
@@ -269,6 +270,76 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         boolean update = this.update(updateWrapper);
         if(!update) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "加入队伍失败！");
+        }
+        return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean quitTeam(TeamQuitRequest teamQuitRequest, User loginUser) {
+        // 1. 校验队伍是否存在
+        Team team = this.getById(teamQuitRequest.getTeamId());
+        if(team == null) {
+            throw new BusinessException(ErrorCode.NULL_ERROR, "该队伍不存在！");
+        }
+
+        // 2. 校验登录的用户是否已加入队伍
+        QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();
+        userTeamQueryWrapper.eq("userId", loginUser.getId());
+        userTeamQueryWrapper.eq("teamId", team.getTeamId());
+        long isExist = userTeamService.count(userTeamQueryWrapper);
+        if(isExist < 1) {
+            throw new BusinessException(ErrorCode.NULL_ERROR, "用户不存在这个队伍中！");
+        }
+
+        // 退出队伍
+        int currentNum = team.getMaxNumber() - team.getRemainNumber();
+        if(currentNum == 1) {
+            // 只有该用户自己，直接将队伍解散，在当前分支结束后直接结束
+            // 1. 删除队伍所关联的用户
+            QueryWrapper<UserTeam> userTeamQueryWrapper1 = new QueryWrapper<>();
+            userTeamQueryWrapper1.eq("teamId", team.getTeamId());
+            boolean removeUserTeam = userTeamService.remove(userTeamQueryWrapper1);
+            if(!removeUserTeam) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "退出队伍失败！");
+            }
+            // 2. 删除队伍
+            QueryWrapper<Team> teamQueryWrapper = new QueryWrapper<>();
+            teamQueryWrapper.eq("teamId", team.getTeamId());
+            boolean removeTeam = this.remove(teamQueryWrapper);
+            if(!removeTeam) {
+                throw  new BusinessException(ErrorCode.SYSTEM_ERROR, "退出队伍失败！");
+            }
+        } else if(currentNum >= 2){
+            // 1. 将自己从队伍中退出
+            QueryWrapper<UserTeam> userTeamQueryWrapper1 = new QueryWrapper<>();
+            userTeamQueryWrapper1.eq("userId", loginUser.getId());
+            userTeamQueryWrapper1.eq("teamId", team.getTeamId());
+            boolean removeUserTeam = userTeamService.remove(userTeamQueryWrapper1);
+            if(!removeUserTeam) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "退出队伍失败！");
+            }
+            // 定义查询 wrapper
+            UpdateWrapper<Team> teamUpdateWrapper = new UpdateWrapper<>();
+            teamUpdateWrapper.eq("teamId", team.getTeamId());
+            // 2. 判断是否是队长
+            if (Objects.equals(team.getCaptainId(), loginUser.getId())) {
+                // 查找队员列表中入队时间最早的（只需查找关联表即可）
+                QueryWrapper<UserTeam> userTeamQueryWrapper2 = new QueryWrapper<>();
+                userTeamQueryWrapper2.eq("teamId", team.getTeamId());
+                Long newCaptainId = userTeamMapper.selectFirstById(team.getTeamId());
+                if (newCaptainId == null) {
+                    throw new BusinessException(ErrorCode.SYSTEM_ERROR, "查找用户错误！");
+                }
+                // 更新队长信息
+                teamUpdateWrapper.set("captainId", newCaptainId);
+            }
+            // 更新剩余坑位数量
+            teamUpdateWrapper.set("remainNumber", team.getRemainNumber() + 1);
+            boolean update = this.update(teamUpdateWrapper);
+            if (!update) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "更新队长信息错误！");
+            }
         }
         return true;
     }

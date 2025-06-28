@@ -33,4 +33,11 @@
         where
             ut.teamId = #{teamId}
     </select>
+    <select id="selectFirstById" resultType="java.lang.Long">
+        select ut.userId
+        from user_team ut
+        where ut.teamId = #{teamId}
+        order by ut.joinTime ASC
+        limit 1
+    </select>
 </mapper>

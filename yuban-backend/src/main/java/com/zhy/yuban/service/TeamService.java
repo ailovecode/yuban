@@ -6,6 +6,7 @@ import com.zhy.yuban.model.domain.User;
 import com.zhy.yuban.model.dto.TeamQuery;
 import com.zhy.yuban.model.request.TeamAddRequest;
 import com.zhy.yuban.model.request.TeamJoinRequest;
+import com.zhy.yuban.model.request.TeamQuitRequest;
 import com.zhy.yuban.model.request.TeamUpdateRequest;
 import com.zhy.yuban.model.vo.TeamUserVo;
 
@@ -52,4 +53,13 @@ public interface TeamService extends IService<Team> {
      * @return
      */
     Boolean joinTeam(TeamJoinRequest teamJoinRequest, User loginUser);
+
+    /**
+     * 用户退出队伍
+     *
+     * @param teamQuitRequest
+     * @param loginUser
+     * @return
+     */
+    Boolean quitTeam(TeamQuitRequest teamQuitRequest, User loginUser);
 }
