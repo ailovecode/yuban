@@ -6,14 +6,12 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.zhy.yuban.common.ErrorCode;
-import com.zhy.yuban.common.ResultUtil;
 import com.zhy.yuban.exception.BusinessException;
 import com.zhy.yuban.mapper.UserMapper;
 import com.zhy.yuban.model.domain.User;
 import com.zhy.yuban.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
@@ -22,10 +20,7 @@ import org.springframework.util.DigestUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -118,9 +113,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Override
     public User userLogin(String userAccount, String userPassword, HttpServletRequest request) {
-        /**
-         * 1. 校验账户和密码
-         */
+        // 1. 校验账户和密码
         if(StringUtils.isAnyBlank(userAccount, userPassword)) {
             throw new BusinessException(ErrorCode.NULL_ERROR,"登录信息为空");
         }
@@ -138,9 +131,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if(matcher.find()) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR,"用户名不能包含特殊字符");
         }
-        /**
-         * 2. 查询用户信息 （这里涉及到逻辑上删除，使用MybatisPlus框架来处理）
-         */
+        // 2. 查询用户信息 （这里涉及到逻辑上删除，使用MybatisPlus框架来处理）
         String md5UserPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
         QueryWrapper<User> userLoginMessage = new QueryWrapper<>();
         userLoginMessage.eq("userAccount", userAccount);
@@ -150,17 +141,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             log.info("The userAccount and password do not match!");
             throw new BusinessException(ErrorCode.NULL_ERROR,"不存在此用户");
         }
-        /**
-         * 3. 用户信息的脱敏处理
-         */
+        // 3. 用户信息的脱敏处理
         User safetyUser = getSafetyUser(user);
-        /**
-         * 4. 存储用户信息
-         */
+        // 4. 存储用户信息
         request.getSession().setAttribute(USER_LOGIN_STATUS,safetyUser);
-        /**
-         * 5. 返回脱敏用户信息
-         */
+        // 5. 返回脱敏用户信息
         return safetyUser;
     }
 
@@ -237,7 +222,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         Object attribute = request.getSession().getAttribute(USER_LOGIN_STATUS);
         User loginUser = (User) attribute;
-        if(loginUser.getId() == user.getId() || loginUser.getUserRole() == ADMIN_ROLE) {
+        if(Objects.equals(loginUser.getId(), user.getId()) || loginUser.getUserRole() == ADMIN_ROLE) {
             return true;
         }
         return false;
@@ -285,7 +270,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         // 没有缓存从数据库中查询数据
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        userPage = this.page(new Page<>((pageNum - 1) * pageSize, pageSize), queryWrapper);
+        userPage = this.page(new Page<>((long) (pageNum - 1) * pageSize, pageSize), queryWrapper);
 
         // 将查询的数据写入缓存中
         try {
