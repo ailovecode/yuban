@@ -176,7 +176,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         // 4. 校验队伍名称是否需要修改
         String teamTitle = teamUpdateRequest.getTeamName();
         if(StringUtils.isNotBlank(teamTitle) &&
-                StringUtils.equals(oldTeam.getTeamName(), teamTitle)) {
+                !StringUtils.equals(oldTeam.getTeamName(), teamTitle)) {
             // 校验是否合法
             if(teamTitle.length() > 20) {
                 throw new BusinessException(ErrorCode.PARAMS_ERROR, "队伍名称太长了！");
@@ -185,11 +185,9 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         }
         // 5. 校验队伍描述是否需要修改
         String description = teamUpdateRequest.getDescription();
-        if(StringUtils.isNotBlank(description) &&
-                StringUtils.equals(oldTeam.getDescription(), description)) {
-            // 校验是否合法
-            if(description.length() > 512) {
-                throw  new BusinessException(ErrorCode.PARAMS_ERROR, "队伍描述不合法");
+        if (description != null) {
+            if (description.length() > 512) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "队伍描述不合法");
             }
             updateWrapper.set("description", description);
         }
@@ -229,9 +227,10 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         // 2. 校验是否已经加入队伍
         QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();
         userTeamQueryWrapper.eq("userId", loginUser.getId());
+        userTeamQueryWrapper.eq("teamId", teamJoinRequest.getTeamId());
         long isExist = userTeamService.count(userTeamQueryWrapper);
         if(isExist > 0) {
-            throw new BusinessException(ErrorCode.NULL_ERROR, "用户已在队伍中！");
+            throw new BusinessException(ErrorCode.NULL_ERROR, "你已在队伍中！");
         }
         // 3. 校验密码是否正确？
         String inputPassword = teamJoinRequest.getPassword();
@@ -381,14 +380,63 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         // 2. 通过遍历列表信息调用 teamList 返回包装类 UserTeamVo
         List<TeamUserVo> result = new ArrayList<>();
         for(UserTeam userTeam : listUserTeam) {
+            // 有了 teamId 查找队伍相关的信息以及相关的人员
             long teamId = userTeam.getTeamId();
-            TeamQuery teamQuery = new TeamQuery();
-            teamQuery.setTeamId(teamId);
-            List<TeamUserVo> teamUserVo = this.teamList(teamQuery, loginUser);
-            if(teamUserVo.isEmpty()) {
-                throw new BusinessException(ErrorCode.NULL_ERROR, "获取队伍信息错误！");
+
+            // 获取队伍信息
+            Team team = this.getById(teamId);
+            if(team == null) {
+                throw new BusinessException(ErrorCode.NULL_ERROR, "未查找到队伍信息!");
             }
-            result.add(teamUserVo.get(0));
+
+            // 包装队伍信息，包含队员信息
+            TeamUserVo teamUserVo = new TeamUserVo();
+            BeanUtils.copyProperties(team, teamUserVo);
+            // 原队员列表
+            List<User> teamUsers =  userTeamMapper.selectUserByTeamId(teamId);
+            // 包装用户信息
+            List<UserVo> teamUsersVoTarget = new ArrayList<>();
+            for(User userSource : teamUsers) {
+                UserVo userTarget = new UserVo();
+                BeanUtils.copyProperties(userSource, userTarget);
+                teamUsersVoTarget.add(userTarget);
+            }
+            teamUserVo.setUsers(teamUsersVoTarget);
+            result.add(teamUserVo);
+        }
+        return result;
+    }
+
+    @Override
+    public List<TeamUserVo> searchTeam(String searchTeam) {
+        QueryWrapper<Team> queryWrapper = new QueryWrapper<>();
+        queryWrapper.like("teamName", searchTeam)
+                .or()
+                .like("description", searchTeam);
+        // 7. 查询队伍列表信息
+        List<Team> teamList = this.list(queryWrapper);
+        if(teamList == null || teamList.isEmpty()) {
+            throw new BusinessException(ErrorCode.NULL_ERROR, "未查找到队伍信息!");
+        }
+        List<TeamUserVo> result = new ArrayList<>();
+        // 8. 关联表查找用户信息
+        for(Team team : teamList) {
+            // 返回队伍信息
+            TeamUserVo teamUserVo = new TeamUserVo();
+            BeanUtils.copyProperties(team, teamUserVo);
+            long teamId = team.getTeamId();
+
+            // 原队员列表
+            List<User> teamUsersSource =  userTeamMapper.selectUserByTeamId(teamId);
+            // 返回队员列表
+            List<UserVo> teamUsersVoTarget = new ArrayList<>();
+            for(User userSource : teamUsersSource) {
+                UserVo userTarget = new UserVo();
+                BeanUtils.copyProperties(userSource, userTarget);
+                teamUsersVoTarget.add(userTarget);
+            }
+            teamUserVo.setUsers(teamUsersVoTarget);
+            result.add(teamUserVo);
         }
         return result;
     }

@@ -26,10 +26,13 @@ import {showSuccessToast, showFailToast} from "vant";
 import qs from "qs";
 import type {UserType} from "../models/user";
 import "../app.css"
+import {useRouter} from "vue-router";
 
 const userList = ref ([]);
+const router = useRouter();
 
 onMounted(async () => {
+
   // 上述请求也可以按以下方式完成（可选）
   const userListData: UserType[] = await myAxios.get('/user/commend', {
     params: {
@@ -47,6 +50,16 @@ onMounted(async () => {
         console.log('/user/commend error', error);
         showFailToast('请求失败！');
       })
+
+  if (!userListData || userListData.length < 1) {
+    showFailToast('请先登录');
+    // 等动画结束后跳转
+    setTimeout(() => {
+      router.replace('/user/login');
+    }, 800);
+    return;
+  }
+
   console.log('result: ',userListData);
   if(userListData){
     userListData.forEach((user: UserType) => {
@@ -55,6 +68,9 @@ onMounted(async () => {
     userList.value = userListData;
     console.log('yemin:', userList.value);
   }
+
+
+
 })
 
 

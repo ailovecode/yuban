@@ -25,7 +25,7 @@
                 @click="doEdit('phone', '手机号', user.phone)"/>
       <van-cell title="邮箱" is-link to="/user/edit" arrow-direction="right" :value="user.email"
                 @click="doEdit('email', '邮箱', user.email)"/>
-      <van-cell title="星球编号" arrow-direction="right" :value="user.planetCode" />
+      <van-cell title="我的队伍" arrow-direction="right" @click="doMyselfTeam" />
       <van-cell title="注册时间" arrow-direction="right" :value="user.createTime" />
       <div style="margin: 8px;">
         <van-button round block type="primary" native-type="submit" @click="logout">
@@ -83,6 +83,14 @@ const doEdit = (editKey: string, editName: string, editValue: string) => {
     }
   });
 }
+
+// 查看我的队伍
+const doMyselfTeam = () => {
+  router.push({
+    path:'/team/myself'
+  });
+}
+
 </script>
 
 <style scoped>

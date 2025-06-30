@@ -33,7 +33,7 @@ import java.util.List;
 @Api(tags = "队伍模块")
 @RestController
 @RequestMapping("/team")
-@CrossOrigin(origins = {"http://localhost:5173/"})
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 @Slf4j
 public class TeamController {
 
@@ -64,7 +64,7 @@ public class TeamController {
         return ResultUtil.success(teamId);
     }
 
-    @PostMapping("/join/team")
+    @PostMapping("/join")
     public BaseResponse<Boolean> joinTeam(@RequestBody TeamJoinRequest teamJoinRequest, HttpServletRequest request) {
         // 1. 校验数据是否为空？
         if(teamJoinRequest == null) {
@@ -137,7 +137,7 @@ public class TeamController {
         return ResultUtil.success(team);
     }
 
-    @GetMapping("/get/team")
+    @GetMapping("/get/myTeam")
     public BaseResponse<List<TeamUserVo>> getTeamByUserId(HttpServletRequest request) {
         // 1. 获取登录信息
         User loginUser = userService.getLoginUser(request);
@@ -173,6 +173,18 @@ public class TeamController {
         List<TeamUserVo> listResult = teamService.teamList(teamQuery, loginUser);
         if(listResult == null || listResult.isEmpty()) {
             throw new BusinessException(ErrorCode.NULL_ERROR, "查询信息为空！");
+        }
+        return ResultUtil.success(listResult);
+    }
+
+    @GetMapping("/search")
+    public BaseResponse<List<TeamUserVo>> searchTeam(String searchTeam, HttpServletRequest request) {
+        if(searchTeam == null) {
+            throw new BusinessException(ErrorCode.NULL_ERROR, "请求参数为空！");
+        }
+        List<TeamUserVo> listResult = teamService.searchTeam(searchTeam);
+        if(listResult == null || listResult.isEmpty()) {
+            throw new BusinessException(ErrorCode.NULL_ERROR, "搜索队伍为空！");
         }
         return ResultUtil.success(listResult);
     }

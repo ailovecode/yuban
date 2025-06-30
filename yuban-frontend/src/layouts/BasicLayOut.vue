@@ -18,7 +18,7 @@
     </div>
 
 
-    <van-tabbar route safe-area-inset-bottom  @change="onChange">
+    <van-tabbar route safe-area-inset-bottom >
       <van-tabbar-item to="/" icon="home-o" name="index">主页</van-tabbar-item>
       <van-tabbar-item to="/team" icon="friends-o" name="Team">队伍</van-tabbar-item>
       <van-tabbar-item to="/user" icon="contact-o" name="User">个人</van-tabbar-item>
@@ -29,7 +29,6 @@
 
 <script setup >
 
-import {showToast} from "vant";
 import {useRouter} from "vue-router";
 
 const router = useRouter();
@@ -40,8 +39,6 @@ const onClickLeft = () => {
 const onClickRight = () => {
   router.push('/search');
 };
-
-const onChange = (name) => showToast(`标签 ${name}`);
 
 </script>
 
@@ -54,7 +51,7 @@ const onChange = (name) => showToast(`标签 ${name}`);
 
 #content {
   padding-bottom: 50px;
-  height: calc(100vh - 96px); /* 减去导航栏和底部tabbar的高度 */
-  overflow: hidden;
+  min-height: calc(100vh - 96px);
+  overflow: auto; /* 允许内容扩展时滚动 */
 }
 </style>

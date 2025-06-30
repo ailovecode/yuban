@@ -78,4 +78,12 @@ public interface TeamService extends IService<Team> {
      * @return
      */
     List<TeamUserVo> getTeamByUserId(User loginUser);
+
+    /**
+     * 模糊搜索队伍
+     *
+     * @param searchTeam
+     * @return
+     */
+    List<TeamUserVo> searchTeam(String searchTeam);
 }
